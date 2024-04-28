@@ -1,0 +1,7 @@
+langchain
+streamlit
+python-dotenv
+datetime
+pathlib
+agentql
+#-e.

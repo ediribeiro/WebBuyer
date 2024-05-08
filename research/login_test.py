@@ -33,7 +33,7 @@ def get_user_session_state():
     }"""
 
     response = session.query(QUERY_SING_UP)
-    response.hearder.entrar_btn.click(force=True)
+    response.header.entrar_btn.click(force=True)
     
     response = session.query(QUERY_LOGIN)
     response.header.email_box.fill(URL_USER_ID)

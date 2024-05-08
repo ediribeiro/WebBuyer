@@ -7,6 +7,7 @@ import time
 from datetime import datetime
 
 load_dotenv()
+
 urls = [
     "https://superveneza.instabuy.com.br/",
     "https://www.paodeacucar.com/",
@@ -17,9 +18,10 @@ shopping_list = ["Corona", "Stella", "Becks", "Heineken"]
 data_folder = "D:\\ProjectsAI\\WebBuyer\\data\\"
 
 # Helper function to save JSON data as CSV
-def save_json_as_csv(json_data, file_name, url):
+def save_json_as_csv(json_data, file_name, url, item):
     csv_header = [
         "url",
+        "item",
         "product_description",
         "product_price",
         "product_promotion_price",
@@ -38,7 +40,7 @@ def save_json_as_csv(json_data, file_name, url):
                 product_price = product.get("product_price", "")
                 product_promotion_price = product.get("product_promotion_price", "")
                 writer.writerow(
-                    [url, product_description, product_price, product_promotion_price]
+                    [url, item, product_description, product_price, product_promotion_price]
                 )
     time.sleep(1)
 
@@ -85,6 +87,6 @@ for url in urls:
         # Run search query on search page
         search_results = session.query(SEARCH_QUERY)
         print(search_results)
-        save_json_as_csv(search_results.to_data(), file_name, url)
+        save_json_as_csv(search_results.to_data(), file_name, url, item)
         time.sleep(1)
     session.stop()

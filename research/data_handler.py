@@ -40,31 +40,6 @@ def extract_volume_and_package(description):
             break
     return volume, volume_value, package
 
-def process_row(row):
-    description = row['product_description']
-    volume, volume_value, package = extract_volume_and_package(description)
-    row['volume'], row['volume_value'], row['package_type'] = volume, volume_value, package
-
-    price_str = row.get('product_price', row.get('product_promotion_price', '')).replace('R$', '').strip().replace(',', '.')
-    promo_price_str = row.get('product_promotion_price', row.get('product_price', '')).replace('R$', '').strip().replace(',', '.')
-    
-    try:
-        price, promo_price = float(price_str), float(promo_price_str)
-    except ValueError:
-        price, promo_price = float('inf'), float('inf')
-    
-    min_price = min(price, promo_price)
-    if min_price == float('inf'):
-        return None
-
-    quantity = extract_quantity(description)
-    unit_price = calculate_unit_price(price, promo_price, min_price, quantity)
-    row['unit_price'] = unit_price
-    
-    row['price_per_liter'] = unit_price / volume_value * 1000
-
-    return row
-
 def find_lowest_price_per_type(data):
     # Dictionary to store the lowest price per liter for each type of item
     lowest_prices = defaultdict(lambda: {'price': float('inf'), 'product': None})
@@ -80,7 +55,7 @@ def find_lowest_price_per_type(data):
             lowest_prices[product_type]['product']['url'] += ','+ row['url']
     return lowest_prices
 
-def process_csv(input_file, output_file):
+def process_csv(input_file):
     # Read input CSV file and load into list of dictionaries
     with open(input_file, mode='r', newline='', encoding='latin-1') as infile:
         reader = csv.DictReader(infile)
@@ -96,8 +71,8 @@ def process_csv(input_file, output_file):
         row['package_type'] = package
 
         # Calculate price per litre
-        price_str = row.get('product_price', row.get('product_promotion_price', '')).replace('R$', '').strip().replace(',', '.')  # Remove currency symbol, spaces and commas
-        promo_price_str = row.get('product_promotion_price', row.get('product_price', '')).replace('R$', '').strip().replace(',', '.')  # Remove currency symbol, spaces and commas 
+        price_str = row.get('product_price', row.get('product_discount_prince', '')).replace('R$', '').strip().replace(',', '.')  # Remove currency symbol, spaces and commas
+        promo_price_str = row.get('product_discount_prince', row.get('product_price', '')).replace('R$', '').strip().replace(',', '.')  # Remove currency symbol, spaces and commas 
         
         # Handle cases where price is not a number
         try:
@@ -132,38 +107,11 @@ def process_csv(input_file, output_file):
 
     # Write modified data to output CSV file
     fieldnames = data[0].keys()
+    output_file = f"{input_file}_processed.csv"
     with open(output_file, mode='w', newline='', encoding='utf-8') as outfile:
         writer = csv.DictWriter(outfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(data)
-    
-    """# Find the product with the lowest price per liter
-    lowest_price_per_liter = float('inf')
-    lowest_product = None
-
-    for row in data:
-        # Handle the case where 'price_per_liter' column might not exist
-        try:
-            price_per_liter = row['price_per_liter']
-            if price_per_liter < lowest_price_per_liter:
-                lowest_price_per_liter = price_per_liter
-                lowest_product = row
-        except KeyError:
-            continue  # Skip this row if 'price_per_liter' column doesn't exist
-
-    if lowest_product is not None:
-        for row in data:
-            if row['price_per_liter'] == lowest_price_per_liter and row['url'] != lowest_product['url']:
-                lowest_product['url'] += ' , ' + row['url']
-        product_description = lowest_product['product_description']
-        unit_price = lowest_product['unit_price']
-        url = lowest_product.get('url', '')
-        print(f"Lowest price per liter: R${lowest_price_per_liter:.2f}")
-        print(f"Product Description: {product_description}")
-        print(f"Unit Price: R${unit_price}")
-        print(f"URL: {url}")
-    else:
-        print("No valid prices found in the data.")"""
     
     # Find and print lowest price per liter for each type of item
     lowest_prices = find_lowest_price_per_type(data)
@@ -178,11 +126,6 @@ def process_csv(input_file, output_file):
             print(f"Product Description: {product_description}")
             print(f"Unit Price: R${unit_price}")
             print(f"URL: {url}")
+            print()
         else:
             print("No valid prices found for this product type.")
-
-# Example usage
-input_file = f"D:\ProjectsAI\WebBuyer\data\price_verification_08.05.2024_08.15.csv"
-output_file = f"{input_file}_processed.csv"
-
-process_csv(input_file, output_file)
